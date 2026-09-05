@@ -34,12 +34,11 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore ${{ env.PROJECT }}
 
-      # TODO: no test project exists in this repo yet, so `dotnet test` here would fail —
-      # a project/solution with zero real test projects returns a non-zero exit code on the
-      # .NET 10 test runner (not just "0 tests, pass"). Disabled until a real test project
-      # exists. Re-enable once one does:
-      # - name: Run Tests
-      #   run: dotnet test ${{ env.PROJECT }} --configuration Release --no-restore
+      # No separate unit test project exists — GenericRepository.Console exercises the real
+      # library end-to-end against SQLite and throws (non-zero exit) if any check fails, so it
+      # doubles as this pipeline's verification step.
+      - name: Verify Behavior (console smoke test)
+        run: dotnet run --project GenericRepository.Console/GenericRepository.Console.csproj --configuration Release
 
       - name: Build Project
         run: dotnet build ${{ env.PROJECT }} --configuration Release --no-restore -p:Version=${{ env.VERSION }}
