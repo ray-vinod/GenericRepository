@@ -9,6 +9,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    env:
+      PROJECT: GenericRepository.EFCore/GenericRepository.EFCore.csproj
+
     steps:
       - name: Validate Tag Format
         run: |
@@ -29,16 +32,20 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore ${{ env.PROJECT }}
 
-      - name: Run Tests
-        run: dotnet test --configuration Release --no-restore
+      # TODO: no test project exists in this repo yet, so `dotnet test` here would fail —
+      # a project/solution with zero real test projects returns a non-zero exit code on the
+      # .NET 10 test runner (not just "0 tests, pass"). Disabled until a real test project
+      # exists. Re-enable once one does:
+      # - name: Run Tests
+      #   run: dotnet test ${{ env.PROJECT }} --configuration Release --no-restore
 
       - name: Build Project
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ${{ env.PROJECT }} --configuration Release --no-restore -p:Version=${{ env.VERSION }}
 
       - name: Create NuGet Package
-        run: dotnet pack --configuration Release --no-build
+        run: dotnet pack ${{ env.PROJECT }} --configuration Release --no-build -p:Version=${{ env.VERSION }}
 
       - name: List Built Packages
         run: ls -al GenericRepository.EFCore/bin/Release/*.nupkg

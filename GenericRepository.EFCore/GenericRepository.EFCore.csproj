@@ -10,6 +10,7 @@
     <Company>ray-vinod</Company>
     <Title>GenericRepository.EFCore</Title>
     <PackageReadMeFile>README.md</PackageReadMeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <Description>A powerful generic repository with CRUD operations, Unit of Work pattern, and LINQ extensions. It's allow dynamically creates generic repositories.This Version has Include auditable fields and paging.</Description>
     <PackageTags>AspNetCore;EF Core;EntityFramework Core;Generic Repository;Repository;UnitOfWork</PackageTags>
     <PackageProjectUrl>https://github.com/ray-vinod/MinimalApiEndpoints</PackageProjectUrl>
@@ -17,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE.txt" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
