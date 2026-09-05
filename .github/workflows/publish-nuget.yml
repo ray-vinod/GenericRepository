@@ -41,11 +41,11 @@ jobs:
         run: dotnet pack --configuration Release --no-build
 
       - name: List Built Packages
-        run: ls -al bin/Release/*.nupkg
+        run: ls -al GenericRepository.EFCore/bin/Release/*.nupkg
 
       - name: Push To NuGet Gallery
         run: |
-          dotnet nuget push bin/Release/*.nupkg \
+          dotnet nuget push GenericRepository.EFCore/bin/Release/*.nupkg \
             --source https://api.nuget.org/v3/index.json \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --skip-duplicate
@@ -83,5 +83,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_API_SECRET }}
         run: |
           gh release upload ${{ github.ref_name }} \
-            "bin/Release/GenericRepository.EFCore.${{ env.VERSION }}.nupkg" \
+            "GenericRepository.EFCore/bin/Release/GenericRepository.EFCore.${{ env.VERSION }}.nupkg" \
             --clobber
