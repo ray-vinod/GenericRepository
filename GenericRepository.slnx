@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="GenericRepository.Console/GenericRepository.Console.csproj" />
+  <Project Path="GenericRepository.EFCore/GenericRepository.EFCore.csproj" />
+</Solution>

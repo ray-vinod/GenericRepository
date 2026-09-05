@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>GenericRepository.EFCore </PackageId>
+    <Version>2.0.9</Version>
+    <Authors>ray-vinod</Authors>
+    <Company>ray-vinod</Company>
+    <Title>GenericRepository.EFCore</Title>
+    <PackageReadMeFile>README.md</PackageReadMeFile>
+    <Description>A powerful generic repository with CRUD operations, Unit of Work pattern, and LINQ extensions. It's allow dynamically creates generic repositories.This Version has Include auditable fields and paging.</Description>
+    <PackageTags>AspNetCore;EF Core;EntityFramework Core;Generic Repository;Repository;UnitOfWork</PackageTags>
+    <PackageProjectUrl>https://github.com/ray-vinod/MinimalApiEndpoints</PackageProjectUrl>
+    <License>MIT</License>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+  </ItemGroup>
+</Project>
