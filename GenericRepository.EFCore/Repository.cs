@@ -76,7 +76,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// <inheritdoc/>
     public async Task<IEnumerable<TEntity>?> GetAllAsync()
     {
-        return await AsQueryable().ToListAsync();
+        return await AsQueryable().AsNoTracking().ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -84,7 +84,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
         Expression<Func<TEntity, bool>> predicate,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = AsQueryable();
+        var query = AsQueryable().AsNoTracking();
         query = includes.Aggregate(query, (current, include) => current.Include(include));
         return await query.Where(predicate).ToListAsync();
     }
@@ -99,7 +99,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// <inheritdoc/>
     public async Task<IEnumerable<TEntity>?> GetSoftDeletedAsync()
     {
-        return await SoftDeletedQueryable().ToListAsync();
+        return await SoftDeletedQueryable().AsNoTracking().ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -107,7 +107,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
         Expression<Func<TEntity, bool>> predicate,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = SoftDeletedQueryable();
+        var query = SoftDeletedQueryable().AsNoTracking();
         query = includes.Aggregate(query, (current, include) => current.Include(include));
         return await query.Where(predicate).ToListAsync();
     }
@@ -120,7 +120,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = AsQueryable();
+        var query = AsQueryable().AsNoTracking();
         query = includes.Aggregate(query, (current, include) => current.Include(include));
 
         if (predicate != null)
@@ -215,6 +215,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// state-by-state breakdown), then protects audit-managed columns from being clobbered by a
     /// disconnected object that didn't populate them.
     /// </summary>
+    /// <param name="entity"></param>
     /// <param name="preserveDeletedAt">
     /// <see langword="true"/> to keep whatever <c>DeletedAt</c> is currently persisted,
     /// regardless of what <paramref name="entity"/> carries for it (the generic
