@@ -113,36 +113,14 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     }
 
     /// <inheritdoc/>
-    public async Task<PagedList<TEntity>> GetPagedAsync(
+    public Task<PagedList<TEntity>> GetPagedAsync(
         int pageNumber,
         int pageSize,
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = AsQueryable();
-        query = includes.Aggregate(query, (current, include) => current.Include(include));
-
-        if (predicate != null)
-        {
-            query = query.Where(predicate);
-        }
-
-        if (orderBy != null)
-        {
-            query = orderBy(query);
-        }
-
-        var totalItemCount = await query.CountAsync();
-        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-
-        return new PagedList<TEntity>
-        {
-            Items = items,
-            TotalItemCount = totalItemCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-        };
+        return AsQueryable().GetPagedAsync(pageNumber, pageSize, predicate, orderBy, includes);
     }
 
     /// <inheritdoc/>
@@ -215,6 +193,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// state-by-state breakdown), then protects audit-managed columns from being clobbered by a
     /// disconnected object that didn't populate them.
     /// </summary>
+    /// <param name="entity"></param>
     /// <param name="preserveDeletedAt">
     /// <see langword="true"/> to keep whatever <c>DeletedAt</c> is currently persisted,
     /// regardless of what <paramref name="entity"/> carries for it (the generic

@@ -9,6 +9,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    env:
+      PROJECT: GenericRepository.EFCore/GenericRepository.EFCore.csproj
+
     steps:
       - name: Validate Tag Format
         run: |
@@ -29,30 +32,33 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore ${{ env.PROJECT }}
 
-      - name: Run Tests
-        run: dotnet test --configuration Release --no-restore
+      # No separate unit test project exists — GenericRepository.Console exercises the real
+      # library end-to-end against SQLite and throws (non-zero exit) if any check fails, so it
+      # doubles as this pipeline's verification step.
+      - name: Verify Behavior (console smoke test)
+        run: dotnet run --project GenericRepository.Console/GenericRepository.Console.csproj --configuration Release
 
       - name: Build Project
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ${{ env.PROJECT }} --configuration Release --no-restore -p:Version=${{ env.VERSION }}
 
       - name: Create NuGet Package
-        run: dotnet pack --configuration Release --no-build
+        run: dotnet pack ${{ env.PROJECT }} --configuration Release --no-build -p:Version=${{ env.VERSION }}
 
       - name: List Built Packages
-        run: ls -al bin/Release/*.nupkg
+        run: ls -al GenericRepository.EFCore/bin/Release/*.nupkg
 
       - name: Push To NuGet Gallery
         run: |
-          dotnet nuget push bin/Release/*.nupkg \
+          dotnet nuget push GenericRepository.EFCore/bin/Release/*.nupkg \
             --source https://api.nuget.org/v3/index.json \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --skip-duplicate
 
       - name: Push To GitHub Packages
         run: |
-          dotnet nuget push bin/Release/*.nupkg \
+          dotnet nuget push GenericRepository.EFCore/bin/Release/*.nupkg \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --api-key ${{ secrets.GH_API_SECRET }} \
             --skip-duplicate
@@ -83,5 +89,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_API_SECRET }}
         run: |
           gh release upload ${{ github.ref_name }} \
-            "bin/Release/GenericRepository.EFCore.${{ env.VERSION }}.nupkg" \
+            "GenericRepository.EFCore/bin/Release/GenericRepository.EFCore.${{ env.VERSION }}.nupkg" \
             --clobber
