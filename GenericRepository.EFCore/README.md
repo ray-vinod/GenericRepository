@@ -12,11 +12,11 @@ dotnet add package GenericRepository.EFCore
 
 - Generic async CRUD (`AddAsync`, `UpdateAsync`, `DeleteAsync`) for any entity — no per-entity repository required.
 - `UpdateAsync` is tracking-state aware: attaches detached entities or merges into an already-tracked instance, whichever is correct.
-- LINQ querying via `AsQueryable()`, plus `GetAllAsync`/`FindAsync` overloads with predicate and `Include` support.
-- Built-in paging via `GetPagedAsync`, returning a `PagedList<T>` with count, page count, and has-next/has-previous.
+- LINQ querying via `AsQueryable()`, plus `GetAllAsync`/`FindAsync` overloads with predicate and `Include` support. `AsQueryable()` returns a tracked query, matching EF Core's own default.
+- Built-in paging via `GetPagedAsync`, returning a `PagedList<T>` with count, page count, and has-next/has-previous. Also available as an `IQueryable<T>` extension, so it works on a query you've already shaped with `.AsNoTracking()` or other custom LINQ, not just on the repository directly.
 - Soft delete and restore (`SoftDeleteAsync`/`RestoreAsync`) for `IAuditable` entities — driven entirely by `DeletedAt`, with no separate flag to drift out of sync. Calling either out of state is a safe no-op.
 - `GetSoftDeletedAsync` is the only place soft-deleted rows show up; every other query excludes them automatically.
-- `GetAllAsync`, `GetPagedAsync`, and `GetSoftDeletedAsync` return `AsNoTracking` results — call `UpdateAsync` to persist any change to them.
+- `GetAllAsync`, `GetPagedAsync`, and `GetSoftDeletedAsync` return tracked results, same as EF Core does by default — no extra behavior to remember when deciding whether you can update what comes back.
 - Auditable fields (`CreatedAt`, `UpdatedAt`, `DeletedAt`) are stamped automatically on save.
 - Unit of Work pattern via `IUnitOfWork.Of<TEntity>()` — one context, one `SaveChangesAsync()` across entity types.
 - Transaction support (`BeginTransactionAsync`) for multi-step operations.
@@ -101,6 +101,23 @@ var expensiveProducts = uow.Of<Product>().AsQueryable()
 ```
 
 `GetAllAsync`, `FindAsync`, and `AsQueryable` all exclude soft-deleted rows for entities implementing `IAuditable`, unconditionally — there's no flag to opt out of that per call. If you need to see soft-deleted rows, use `GetSoftDeletedAsync` (below) instead.
+
+#### Read-only browsing with `AsNoTracking`
+
+`AsQueryable()` returns a tracked query, same as EF Core itself. For pure display/browse scenarios where you never call `UpdateAsync` on the results, opt into no-tracking by chaining it yourself; `GetPagedAsync` is also available as an `IQueryable<T>` extension so the fluent chain continues naturally:
+
+```csharp
+var page = await uow.Of<Medicine>()
+    .AsQueryable()
+    .AsNoTracking()
+    .GetPagedAsync(
+        pageNumber: 1,
+        pageSize: 20,
+        predicate: m => m.IsActive,
+        orderBy: q => q.OrderBy(m => m.Name));
+```
+
+This is the same `GetPagedAsync` the repository uses internally — `IRepository<TEntity>.GetPagedAsync(...)` is just `AsQueryable().GetPagedAsync(...)` under the hood — so behavior is identical for a plain, unmodified query. For a plain filtered/eager-loaded list without paging, drop down to `AsQueryable().AsNoTracking()` followed by your own `.Where(...)`/`.Include(...)`/`.ToListAsync()`.
 
 ### 4. Paging
 

@@ -76,7 +76,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// <inheritdoc/>
     public async Task<IEnumerable<TEntity>?> GetAllAsync()
     {
-        return await AsQueryable().AsNoTracking().ToListAsync();
+        return await AsQueryable().ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -84,7 +84,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
         Expression<Func<TEntity, bool>> predicate,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = AsQueryable().AsNoTracking();
+        var query = AsQueryable();
         query = includes.Aggregate(query, (current, include) => current.Include(include));
         return await query.Where(predicate).ToListAsync();
     }
@@ -99,7 +99,7 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
     /// <inheritdoc/>
     public async Task<IEnumerable<TEntity>?> GetSoftDeletedAsync()
     {
-        return await SoftDeletedQueryable().AsNoTracking().ToListAsync();
+        return await SoftDeletedQueryable().ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -107,42 +107,20 @@ public class Repository<TEntity, TDataContext>(TDataContext context) : IReposito
         Expression<Func<TEntity, bool>> predicate,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = SoftDeletedQueryable().AsNoTracking();
+        var query = SoftDeletedQueryable();
         query = includes.Aggregate(query, (current, include) => current.Include(include));
         return await query.Where(predicate).ToListAsync();
     }
 
     /// <inheritdoc/>
-    public async Task<PagedList<TEntity>> GetPagedAsync(
+    public Task<PagedList<TEntity>> GetPagedAsync(
         int pageNumber,
         int pageSize,
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         params Expression<Func<TEntity, object>>[] includes)
     {
-        var query = AsQueryable().AsNoTracking();
-        query = includes.Aggregate(query, (current, include) => current.Include(include));
-
-        if (predicate != null)
-        {
-            query = query.Where(predicate);
-        }
-
-        if (orderBy != null)
-        {
-            query = orderBy(query);
-        }
-
-        var totalItemCount = await query.CountAsync();
-        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-
-        return new PagedList<TEntity>
-        {
-            Items = items,
-            TotalItemCount = totalItemCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-        };
+        return AsQueryable().GetPagedAsync(pageNumber, pageSize, predicate, orderBy, includes);
     }
 
     /// <inheritdoc/>

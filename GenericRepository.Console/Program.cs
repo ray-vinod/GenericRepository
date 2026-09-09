@@ -96,7 +96,7 @@ internal class Program
 
         var electronicsProducts = (await uow.Of<Product>().GetAllAsync(
             p => p.CategoryId == electronics.Id,
-            includes: [p => p.Category!])).ToList();
+            includes: [p => p.Category!]) ?? []).ToList();
 
         foreach (var p in electronicsProducts)
         {
@@ -195,6 +195,33 @@ internal class Program
         Assert(page1.TotalPages == 2, "3 items at page size 2 should be 2 pages.");
         Assert(page1.HasNextPage && !page1.HasPreviousPage, "Page 1 of 2 should have a next page but no previous page.");
 
+        Section("Tracking behavior: tracked by default, no-tracking opt-in via AsQueryable()");
+
+        var trackedAll = (await uow.Of<Product>().GetAllAsync())!.ToList();
+        var trackedAllSample = trackedAll.First();
+        Console.WriteLine($"GetAllAsync() -> '{trackedAllSample.Name}' tracked: {IsTracked(trackedAllSample)}");
+        Assert(IsTracked(trackedAllSample), "GetAllAsync() should return tracked entities by default, matching EF Core's own default.");
+
+        var trackedPage = await uow.Of<Product>().GetPagedAsync(
+            pageNumber: 1,
+            pageSize: 10,
+            orderBy: q => q.OrderBy(p => p.Name));
+        var trackedPageSample = trackedPage.Items.First();
+        Console.WriteLine($"GetPagedAsync() -> '{trackedPageSample.Name}' tracked: {IsTracked(trackedPageSample)}");
+        Assert(IsTracked(trackedPageSample), "GetPagedAsync() should also return tracked entities by default.");
+
+        var noTrackingPage = await uow.Of<Product>()
+            .AsQueryable()
+            .AsNoTracking()
+            .GetPagedAsync(
+                pageNumber: 1,
+                pageSize: 10,
+                orderBy: q => q.OrderBy(p => p.Name));
+        var noTrackingSample = noTrackingPage.Items.First();
+        Console.WriteLine($"AsQueryable().AsNoTracking().GetPagedAsync() -> '{noTrackingSample.Name}' tracked: {IsTracked(noTrackingSample)}");
+        Assert(!IsTracked(noTrackingSample), "Chaining AsNoTracking() before GetPagedAsync() should return detached entities.");
+        Assert(noTrackingPage.TotalItemCount == trackedPage.TotalItemCount, "The no-tracking overload should page the same underlying data as the tracked default.");
+
         Section("Transaction commit");
 
         await using (var transaction = await uow.BeginTransactionAsync())
@@ -271,5 +298,8 @@ internal class Program
                 throw new InvalidOperationException($"Verification failed: {message}");
             }
         }
+
+        bool IsTracked(object entity) =>
+            context.ChangeTracker.Entries().Any(e => ReferenceEquals(e.Entity, entity));
     }
 }
